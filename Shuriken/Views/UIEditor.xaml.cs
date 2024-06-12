@@ -65,6 +65,7 @@ namespace Shuriken.Views
             sv.SizeX = ViewResolution.X;
             sv.SizeY = ViewResolution.Y;
             sv.Tick(deltaTime);
+            renderer.Initialize();
             renderer.SetShader(renderer.shaderDictionary["basic"]);
 
             UpdateSceneGroups(Project.SceneGroups, Project.Fonts, sv.Time);
