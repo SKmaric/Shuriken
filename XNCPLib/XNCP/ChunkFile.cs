@@ -20,11 +20,37 @@ namespace XNCPLib.XNCP
         public XTextureListChunk TextureList { get; set; }
         public OffsetChunk Offset { get; set; }
         public EndChunk End { get; set; }
+        public Encoding Encoding
+        {
+            get
+            {
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                return Encoding.GetEncoding("shift-jis");
+            }
+        }
 
         public ChunkFile()
         {
             Offset = new OffsetChunk();
             End = new EndChunk();
+        }
+
+        public void Load(string filename)
+        {
+            BinaryObjectReader reader = new BinaryObjectReader(filename, Endianness.Big, Encoding);
+
+            Read(reader);
+
+            reader.Dispose();
+        }
+
+        public void Save(string filename)
+        {
+            BinaryObjectWriter writer = new BinaryObjectWriter(filename, Endianness.Big, Encoding);
+
+            Write(writer);
+
+            writer.Dispose();
         }
 
         public void Read(BinaryObjectReader reader)
