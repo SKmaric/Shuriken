@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using Amicitia.IO.Binary;
+using XNCPLib.Extensions;
 using XNCPLib.Misc;
 
 namespace XNCPLib.XNCP
@@ -32,11 +36,21 @@ namespace XNCPLib.XNCP
             BinaryObjectReader reader = new BinaryObjectReader(filename, Endianness.Little, Encoding);
 
             Signature = reader.ReadUInt32();
-            if (Signature == Utilities.Make4CCLE("CPAF")) 
+            if (Signature == Utilities.Make4CCLE("NGIF"))
+            {
                 reader.Endianness = Endianness.Big;
+                reader.Seek(reader.Position-4, SeekOrigin.Begin);
+                Resources[0].Content.Read(reader);
+            }
+            else
+            {
+                if (Signature == Utilities.Make4CCLE("CPAF"))
+                    reader.Endianness = Endianness.Big;
 
-            Resources[0].Read(reader);
-            Resources[1].Read(reader);
+                Resources[0].Read(reader);
+                if (Path.GetExtension(filename) != ".gncp")
+                    Resources[1].Read(reader);
+            }
 
             reader.Dispose();
         }
@@ -45,7 +59,7 @@ namespace XNCPLib.XNCP
         {
             BinaryObjectWriter writer = new BinaryObjectWriter(filename, Endianness.Little, Encoding);
 
-            if (filename.EndsWith("yncp"))
+            if (Path.GetExtension(filename) != (".xncp"))
             {
                 writer.Endianness = Endianness.Big;
             }
@@ -54,7 +68,8 @@ namespace XNCPLib.XNCP
             writer.WriteUInt32(Signature);
 
             Resources[0].Write(writer);
-            Resources[1].Write(writer);
+            if (Path.GetExtension(filename) != ".gncp")
+                Resources[1].Write(writer);
 
             writer.Dispose();
         }

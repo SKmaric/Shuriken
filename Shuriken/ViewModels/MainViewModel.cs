@@ -29,7 +29,6 @@ namespace Shuriken.ViewModels
 
         // File Info
         public FAPCFile WorkFile { get; set; }
-        public ChunkFile ChunkFile { get; set; }
         public string WorkFilePath { get; set; }
         public bool IsLoaded { get; set; }
         public MainViewModel()
@@ -110,75 +109,21 @@ namespace Shuriken.ViewModels
         /// <param name="filename">The path of the file to load</param>
         public void Load(string filename)
         {
+            WorkFile = new FAPCFile();
+            WorkFile.Load(filename);
+
             Clear();
             ncpSubimages.Clear();
 
             string root = Path.GetDirectoryName(Path.GetFullPath(filename));
 
-            if (Path.GetExtension(filename) == ".gncp")
+            FontList xFontList = WorkFile.Resources[0].Content.CsdmProject.Fonts;
+            TextureList texList = new TextureList("textures");
+            GetSubImages(WorkFile.Resources[0].Content.CsdmProject.Root);
+
+            if (Path.GetExtension(filename) != ".gncp")
             {
-                ChunkFile = new ChunkFile();
-                ChunkFile.Load(filename);
-
-                //List<XTexture> xTextures = chunkFile.TextureList.Textures;
-                FontList xFontList = ChunkFile.CsdmProject.Fonts;
-
-                TextureList texList = new TextureList("textures");
-
-                GetSubImages(ChunkFile.CsdmProject.Root);
-
-                if (texList.Textures.Count < 1)
-                {
-                    int texIndexMax = 0;
-                    foreach (var image in ncpSubimages)
-                    {
-                        int textureIndex = (int)image.TextureIndex;
-                        if (textureIndex > texIndexMax)
-                        {
-                            texIndexMax = textureIndex;
-                        }
-                    }
-                    for (int n = 0; n <= texIndexMax; ++n)
-                    {
-                        string texPath = Path.Combine(root, "tex_id_" + n + ".dds");
-
-                        if (File.Exists(texPath))
-                            texList.Textures.Add(new Texture(texPath));
-                        else
-                            MissingTextures.Add("tex_id_" + n + ".dds");
-                    }
-                }
-
-                if (MissingTextures.Count > 0)
-                    WarnMissingTextures();
-
-                LoadSubimages(texList, ncpSubimages);
-
-                List<FontID> fontIDSorted = xFontList.FontIDTable.OrderBy(o => o.Index).ToList();
-                for (int i = 0; i < xFontList.FontIDTable.Count; i++)
-                {
-                    int id = Project.CreateFont(fontIDSorted[i].Name);
-                    UIFont font = Project.TryGetFont(id);
-                    foreach (var mapping in xFontList.Fonts[i].CharacterMappings)
-                    {
-                        var sprite = Utilities.FindSpriteIDFromNCPScene((int)mapping.SubImageIndex, ncpSubimages, texList.Textures);
-                        font.Mappings.Add(new Models.CharacterMapping(mapping.SourceCharacter, sprite));
-                    }
-                }
-
-                ProcessSceneGroups(ChunkFile.CsdmProject.Root, null, texList, ChunkFile.CsdmProject.ProjectName);
-
-                Project.TextureLists.Add(texList);
-
-            } else
-            {
-                WorkFile = new FAPCFile();
-                WorkFile.Load(filename);
-
                 List<XTexture> xTextures = WorkFile.Resources[1].Content.TextureList.Textures;
-                FontList xFontList = WorkFile.Resources[0].Content.CsdmProject.Fonts;
-
-                TextureList texList = new TextureList("textures");
                 foreach (XTexture texture in xTextures)
                 {
                     if (texture.Data != null)
@@ -193,29 +138,49 @@ namespace Shuriken.ViewModels
                             MissingTextures.Add(texture.Name);
                     }
                 }
-
-                if (MissingTextures.Count > 0)
-                    WarnMissingTextures();
-
-                GetSubImages(WorkFile.Resources[0].Content.CsdmProject.Root);
-                LoadSubimages(texList, ncpSubimages);
-
-                List<FontID> fontIDSorted = xFontList.FontIDTable.OrderBy(o => o.Index).ToList();
-                for (int i = 0; i < xFontList.FontIDTable.Count; i++)
+            }
+            else
+            {
+                int texIndexMax = 0;
+                foreach (var image in ncpSubimages)
                 {
-                    int id = Project.CreateFont(fontIDSorted[i].Name);
-                    UIFont font = Project.TryGetFont(id);
-                    foreach (var mapping in xFontList.Fonts[i].CharacterMappings)
+                    int textureIndex = (int)image.TextureIndex;
+                    if (textureIndex > texIndexMax)
                     {
-                        var sprite = Utilities.FindSpriteIDFromNCPScene((int)mapping.SubImageIndex, ncpSubimages, texList.Textures);
-                        font.Mappings.Add(new Models.CharacterMapping(mapping.SourceCharacter, sprite));
+                        texIndexMax = textureIndex;
                     }
                 }
+                for (int n = 0; n <= texIndexMax; ++n)
+                {
+                    string texPath = Path.Combine(root, "tex_id_" + n + ".dds");
 
-                ProcessSceneGroups(WorkFile.Resources[0].Content.CsdmProject.Root, null, texList, WorkFile.Resources[0].Content.CsdmProject.ProjectName);
-
-                Project.TextureLists.Add(texList);
+                    if (File.Exists(texPath))
+                        texList.Textures.Add(new Texture(texPath));
+                    else
+                        MissingTextures.Add("tex_id_" + n + ".dds");
+                }
             }
+
+            if (MissingTextures.Count > 0)
+                WarnMissingTextures();
+
+            LoadSubimages(texList, ncpSubimages);
+
+            List<FontID> fontIDSorted = xFontList.FontIDTable.OrderBy(o => o.Index).ToList();
+            for (int i = 0; i < xFontList.FontIDTable.Count; i++)
+            {
+                int id = Project.CreateFont(fontIDSorted[i].Name);
+                UIFont font = Project.TryGetFont(id);
+                foreach (var mapping in xFontList.Fonts[i].CharacterMappings)
+                {
+                    var sprite = Utilities.FindSpriteIDFromNCPScene((int)mapping.SubImageIndex, ncpSubimages, texList.Textures);
+                    font.Mappings.Add(new Models.CharacterMapping(mapping.SourceCharacter, sprite));
+                }
+            }
+
+            ProcessSceneGroups(WorkFile.Resources[0].Content.CsdmProject.Root, null, texList, WorkFile.Resources[0].Content.CsdmProject.ProjectName);
+
+            Project.TextureLists.Add(texList);
 
             WorkFilePath = filename;
             IsLoaded = !MissingTextures.Any();
@@ -226,56 +191,41 @@ namespace Shuriken.ViewModels
             if (path == null) path = WorkFilePath;
             else WorkFilePath = path;
 
-            if (Path.GetExtension(path) == ".gncp")
+            // TODO: We should create a FACPFile from scratch instead of overwritting the working one
+
+            List<SubImage> subImageList = new();
+            List<Sprite> spriteList = new();
+            BuildSubImageList(ref subImageList, ref spriteList);
+
+
+            Vector2 Data1Factor = new Vector2(1280F, 720F);
+            if (Project.SceneGroups[0].Scenes[0].AspectRatio == 1.33333337F)
             {
-                // TODO: We should create a FACPFile from scratch instead of overwritting the working one
-                FontList xFontList = ChunkFile.CsdmProject.Fonts;
-
-                List<SubImage> subImageList = new();
-                List<Sprite> spriteList = new();
-                BuildSubImageList(ref subImageList, ref spriteList);
-
-                SaveFonts(xFontList, spriteList);
-
-                List<System.Numerics.Vector2> Data1 = new();
-                TextureList texList = Project.TextureLists[0];
-                foreach (Texture tex in texList.Textures)
-                {
-                    Data1.Add(new System.Numerics.Vector2(tex.Width / 1280F, tex.Height / 720F));
-                }
-
-                CSDNode rootNode = new();
-                SaveNode(rootNode, Project.SceneGroups[0], subImageList, Data1, spriteList);
-                ChunkFile.CsdmProject.Root = rootNode;
-
-                ChunkFile.Save(path);
+                Data1Factor = new Vector2(640F, 480F);
             }
-            else
+
+            List<System.Numerics.Vector2> Data1 = new();
+            TextureList texList = Project.TextureLists[0];
+
+            if (Path.GetExtension(path) != ".gncp")
             {
-                // TODO: We should create a FACPFile from scratch instead of overwritting the working one
                 List<XTexture> xTextures = WorkFile.Resources[1].Content.TextureList.Textures;
-                FontList xFontList = WorkFile.Resources[0].Content.CsdmProject.Fonts;
-
-                List<SubImage> subImageList = new();
-                List<Sprite> spriteList = new();
-                BuildSubImageList(ref subImageList, ref spriteList);
-
                 SaveTextures(xTextures);
-                SaveFonts(xFontList, spriteList);
-
-                List<System.Numerics.Vector2> Data1 = new();
-                TextureList texList = Project.TextureLists[0];
-                foreach (Texture tex in texList.Textures)
-                {
-                    Data1.Add(new System.Numerics.Vector2(tex.Width / 1280F, tex.Height / 720F));
-                }
-
-                CSDNode rootNode = new();
-                SaveNode(rootNode, Project.SceneGroups[0], subImageList, Data1, spriteList);
-                WorkFile.Resources[0].Content.CsdmProject.Root = rootNode;
-
-                WorkFile.Save(path);
             }
+
+            foreach (Texture tex in texList.Textures)
+            {
+                Data1.Add(new System.Numerics.Vector2(tex.Width / Data1Factor.X, tex.Height / Data1Factor.Y));
+            }
+
+            FontList xFontList = WorkFile.Resources[0].Content.CsdmProject.Fonts;
+            SaveFonts(xFontList, spriteList);
+
+            CSDNode rootNode = new();
+            SaveNode(rootNode, Project.SceneGroups[0], subImageList, Data1, spriteList);
+            WorkFile.Resources[0].Content.CsdmProject.Root = rootNode;
+
+            WorkFile.Save(path);
         }
 
         private void SaveNode(CSDNode xNode, UISceneGroup uiSceneGroup, List<SubImage> subImageList, List<System.Numerics.Vector2> Data1, List<Sprite> spriteList)

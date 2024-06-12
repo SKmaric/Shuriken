@@ -20,39 +20,11 @@ namespace XNCPLib.XNCP
         public XTextureListChunk TextureList { get; set; }
         public OffsetChunk Offset { get; set; }
         public EndChunk End { get; set; }
-        public Encoding Encoding
-        {
-            get
-            {
-                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                return Encoding.GetEncoding("shift-jis");
-            }
-        }
-
         public ChunkFile()
         {
             Offset = new OffsetChunk();
             End = new EndChunk();
         }
-
-        public void Load(string filename)
-        {
-            BinaryObjectReader reader = new BinaryObjectReader(filename, Endianness.Big, Encoding);
-
-            Read(reader);
-
-            reader.Dispose();
-        }
-
-        public void Save(string filename)
-        {
-            BinaryObjectWriter writer = new BinaryObjectWriter(filename, Endianness.Big, Encoding);
-
-            Write(writer);
-
-            writer.Dispose();
-        }
-
         public void Read(BinaryObjectReader reader)
         {
             reader.PushOffsetOrigin();
@@ -116,6 +88,7 @@ namespace XNCPLib.XNCP
         {
             writer.PushOffsetOrigin();
             Endianness endianPrev = writer.Endianness;
+            string type = Path.GetExtension(writer.FilePath);
 
             //----------------------------------------------------------------
             // Header
@@ -123,10 +96,16 @@ namespace XNCPLib.XNCP
             // Header is always little endian
             writer.Endianness = Endianness.Little;
             {
-                if (endianPrev == Endianness.Big)
-                    Signature = Utilities.Make4CCLE("NYIF");
-                else
-                    Signature = Utilities.Make4CCLE("NXIF");
+                if (type == ".gncp")
+                {
+                    Signature = Utilities.Make4CCLE("NGIF");
+                } else
+                {
+                    if (endianPrev == Endianness.Big)
+                        Signature = Utilities.Make4CCLE("NYIF");
+                    else
+                        Signature = Utilities.Make4CCLE("NXIF");
+                }
 
                 writer.WriteUInt32(Signature);
 
