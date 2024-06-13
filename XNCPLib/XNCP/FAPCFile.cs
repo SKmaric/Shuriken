@@ -41,6 +41,11 @@ namespace XNCPLib.XNCP
                 reader.Endianness = Endianness.Big;
                 reader.Seek(reader.Position-4, SeekOrigin.Begin);
                 Resources[0].Content.Read(reader);
+            } else if (Signature == Utilities.Make4CCLE("NSIF"))
+            {
+                reader.Endianness = Endianness.Little;
+                reader.Seek(reader.Position - 4, SeekOrigin.Begin);
+                Resources[0].Content.Read(reader);
             }
             else
             {
@@ -48,7 +53,7 @@ namespace XNCPLib.XNCP
                     reader.Endianness = Endianness.Big;
 
                 Resources[0].Read(reader);
-                if (Path.GetExtension(filename) != ".gncp")
+                if (new string[] { ".xncp", ".yncp" }.Contains(Path.GetExtension(filename)))
                     Resources[1].Read(reader);
             }
 
@@ -59,7 +64,7 @@ namespace XNCPLib.XNCP
         {
             BinaryObjectWriter writer = new BinaryObjectWriter(filename, Endianness.Little, Encoding);
 
-            if (Path.GetExtension(filename) != (".xncp"))
+            if (new string[] { ".gncp" , ".yncp"}.Contains(Path.GetExtension(filename)))
             {
                 writer.Endianness = Endianness.Big;
             }
@@ -68,7 +73,7 @@ namespace XNCPLib.XNCP
             writer.WriteUInt32(Signature);
 
             Resources[0].Write(writer);
-            if (Path.GetExtension(filename) != ".gncp")
+            if (new string[] { ".xncp", ".yncp" }.Contains(Path.GetExtension(filename)))
                 Resources[1].Write(writer);
 
             writer.Dispose();

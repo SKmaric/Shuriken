@@ -24,7 +24,7 @@ namespace Shuriken
     /// </summary>
     public partial class MainWindow : Window
     {   
-        private static readonly string filters = "All files (*.xncp;*.yncp;*.gncp)|*.xncp;*.yncp;*.gncp|CSD Project (*.xncp)|*.xncp|CSD Project (*.yncp)|*.yncp|CSD Project (*.gncp)|*.gncp";
+        private static readonly string filters = "All files (*.xncp;*.yncp;*.gncp;*.sncp)|*.xncp;*.yncp;*.gncp;*.sncp|CSD Project (*.xncp)|*.xncp|CSD Project (*.yncp)|*.yncp|GameCube/Wii CSD Project (*.gncp)|*.gncp|PS2 CSD Project (*.sncp)|*.sncp";
 
         private MainViewModel vm;
 

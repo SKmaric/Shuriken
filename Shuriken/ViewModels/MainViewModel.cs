@@ -121,7 +121,7 @@ namespace Shuriken.ViewModels
             TextureList texList = new TextureList("textures");
             GetSubImages(WorkFile.Resources[0].Content.CsdmProject.Root);
 
-            if (Path.GetExtension(filename) != ".gncp")
+            if (new string[] { ".xncp", ".yncp" }.Contains(Path.GetExtension(filename)))
             {
                 List<XTexture> xTextures = WorkFile.Resources[1].Content.TextureList.Textures;
                 foreach (XTexture texture in xTextures)
@@ -207,7 +207,7 @@ namespace Shuriken.ViewModels
             List<System.Numerics.Vector2> Data1 = new();
             TextureList texList = Project.TextureLists[0];
 
-            if (Path.GetExtension(path) != ".gncp")
+            if (new string[] { ".xncp", ".yncp" }.Contains(Path.GetExtension(path)))
             {
                 List<XTexture> xTextures = WorkFile.Resources[1].Content.TextureList.Textures;
                 SaveTextures(xTextures);

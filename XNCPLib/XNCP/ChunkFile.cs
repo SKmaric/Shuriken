@@ -96,9 +96,12 @@ namespace XNCPLib.XNCP
             // Header is always little endian
             writer.Endianness = Endianness.Little;
             {
-                if (type == ".gncp")
+                if (new string[] { ".gncp", ".sncp" }.Contains(type))
                 {
-                    Signature = Utilities.Make4CCLE("NGIF");
+                    if (endianPrev == Endianness.Big)
+                        Signature = Utilities.Make4CCLE("NGIF");
+                    else
+                        Signature = Utilities.Make4CCLE("NSIF");
                 } else
                 {
                     if (endianPrev == Endianness.Big)
