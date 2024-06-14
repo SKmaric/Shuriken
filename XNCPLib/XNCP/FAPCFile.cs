@@ -17,6 +17,7 @@ namespace XNCPLib.XNCP
     {
         public uint Signature { get; set; }
         public FAPCEmbeddedRes[] Resources { get; set; }
+        public List<byte[]> EmbeddedFiles { get; set; }
         public Encoding Encoding
         {
             get
@@ -29,6 +30,7 @@ namespace XNCPLib.XNCP
         public FAPCFile()
         {
             Resources = new[] { new FAPCEmbeddedRes(), new FAPCEmbeddedRes() };
+            EmbeddedFiles = new List<byte[]>();
         }
 
         public void Load(string filename)
@@ -55,6 +57,12 @@ namespace XNCPLib.XNCP
                 Resources[0].Read(reader);
                 if (new string[] { ".xncp", ".yncp" }.Contains(Path.GetExtension(filename)))
                     Resources[1].Read(reader);
+
+                while (reader.Position < reader.Length)
+                {
+                    uint fileLength = reader.ReadUInt32();
+                    EmbeddedFiles.Add(reader.ReadArray<byte>((int)fileLength));
+                }
             }
 
             reader.Dispose();
@@ -75,6 +83,14 @@ namespace XNCPLib.XNCP
             Resources[0].Write(writer);
             if (new string[] { ".xncp", ".yncp" }.Contains(Path.GetExtension(filename)))
                 Resources[1].Write(writer);
+
+            if (EmbeddedFiles.Count > 0)
+            {
+                foreach (byte[] file in EmbeddedFiles) {
+                    writer.WriteUInt32((uint)file.Length);
+                    writer.WriteBytes(file);
+                }
+            }
 
             writer.Dispose();
         }
