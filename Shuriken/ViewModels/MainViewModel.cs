@@ -162,7 +162,7 @@ namespace Shuriken.ViewModels
             }
 
             if (MissingTextures.Count > 0)
-                WarnMissingTextures();
+                WarnMissingTextures(true);
 
             LoadSubimages(texList, ncpSubimages);
 
@@ -582,12 +582,14 @@ namespace Shuriken.ViewModels
             MissingTextures.Clear();
         }
 
-        private void WarnMissingTextures()
+        private void WarnMissingTextures(bool isV2 = false)
         {
             StringBuilder builder = new StringBuilder();
             builder.AppendLine("The loaded UI file uses textures that were not found. Saving has been disabled. In order to save, please copy the files listed below into the UI file's directory, and re-open it.\n");
             foreach (var texture in MissingTextures)
                 builder.AppendLine(texture);
+            if (isV2)
+                builder.AppendLine("\nThese textures are likely contained within a separate image archive or embedded within the loaded file (such as TXD or TPL). Export them to DDS and change to the above names as necessary.");
 
             MessageBox.Show(builder.ToString(), "Missing Textures", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
